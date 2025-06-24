@@ -79,31 +79,87 @@ app.post("/shop-user-login", async (req, res) => {
   }
 });
 
-app.get("/get-shop-user-data", async(req, res) => {
-    try {
-        const { id } = req.body;
-        const { status, result } = await new Promise((resolve, reject) => {
-            dbInstance.query(`SELECT * FROM Mechanic where id = ${id || null   }`, (err, result) => {
-                if(err) {
-                    reject({ status: 400, message: err });
-                }  else if (!result || result.length == 0 || !result[0]) {
-                    reject({ status: 400, message: "can't get the user details" });
-                  } else {
-                    resolve({ status: 200, result: result[0] });
-                  }
-            });
-        });
+app.get("/get-shop-user-data", async (req, res) => {
+  try {
+    const { id } = req.body;
+    const { status, result } = await new Promise((resolve, reject) => {
+      dbInstance.query(
+        `SELECT * FROM Mechanic where id = ${id || null}`,
+        (err, result) => {
+          if (err) {
+            reject({ status: 400, message: err });
+          } else if (!result || result.length == 0 || !result[0]) {
+            reject({ status: 400, message: "can't get the user details" });
+          } else {
+            resolve({ status: 200, result: result[0] });
+          }
+        }
+      );
+    });
 
-        return res.send({ status, result, errorMessage: null });
-    } catch(error) {
-        return res.send({ status: 400, errorMessage: error?.message });
-    }
+    return res.send({ status, result, errorMessage: null });
+  } catch (error) {
+    return res.send({ status: 400, errorMessage: error?.message });
+  }
+});
+
+app.post("/create-update-delete-work", async (req, res) => {
+  try {
+    const { id, name, isDelete = false } = req.body;
+
+    const { status, result } = await new Promise((resolve, reject) => {
+      if (isDelete && id) {
+        dbInstance.query(
+          `DELETE FROM Works WHERE id = ${id}`,
+          (err, result) => {
+            if (err) return reject({ status: 400, message: err });
+            return resolve({ status: 200, result });
+          }
+        );
+      } else if (id && name) {
+        dbInstance.query(
+          `UPDATE Works SET name = '${name}' WHERE id = ${id}`,
+          (err, result) => {
+            if (err) return reject({ status: 400, message: err });
+            return resolve({ status: 200, result });
+          }
+        );
+      } else {
+        dbInstance.query(
+          `INSERT INTO Works (id, name) VALUES (default, '${name}')`,
+          (err, result) => {
+            if (err) return reject({ status: 400, message: err });
+            return resolve({ status: 200, result });
+          }
+        );
+      }
+    });
+
+    return res.send({ status, result });
+  } catch (error) {
+    return res.send({ status: 400, errorMessage: error?.message });
+  }
+});
+
+app.get("/get-all-works", async (req, res) => {
+  try {
+    const { status, result } = await new Promise((resolve, reject) => {
+      dbInstance.query(`SELECT * FROM Works`, (err, result) => {
+        if (err) return reject({ status: 400, message: err });
+        return resolve({ status: 200, result });
+      });
+    });
+
+    return res.send({ status, result });
+  } catch (error) {
+    return res.send({ status: 400, errorMessage: error?.message });
+  }
 });
 
 // app.post("/create-service", async(req, res) => {
 //     try {
 //         const {
-//             customerName, mobileNumber, bikeNumber, brand, model, color, year, 
+//             customerName, mobileNumber, bikeNumber, brand, model, color, year,
 //             chassisNumber, bikeFrontImage, bikeBackImage, bikeLeftImage, bikeRightImage,
 //             arrivalDate, estimatedDeliveryDate, actualDeliveryDate, status, remarks, paymentMethod,
 //             amount, paymentStatus, advanceAmount, balanceAmount
